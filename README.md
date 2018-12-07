@@ -1,5 +1,5 @@
 # Testing branch for v1.3
-- Rework on flash memory consumption.
+- Rework on flash and memory consumption.
 - Ability to add other form input (radio butoon,select,check box..)
 - Disable mqtt config by default
 - Easier to use api.
