@@ -1,3 +1,9 @@
+# Testing branch for v1.3
+- Rework on flash memory consumption.
+- Ability to add other form input (radio butoon,select,check box..)
+- Disable mqtt config by default
+- Easier to use api.
+
 # WiFiMan + ESP8266OTA
 Wifiman is Wifi manager for ESP8266 with customizable web UI and ability to config mqtt and control via serial.   
 ESP8266 is a modified version of ESP8266HTTPUpdateServer customizable web UI.   
