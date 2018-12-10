@@ -2,21 +2,14 @@
 
 WiFiMan::WiFiMan()
 {
-    WiFiMan(false,false);
+    WiFiMan(false);
 }
 
-WiFiMan::WiFiMan(bool Authentication)
-{
-    WiFiMan(Authentication,false);
-}
-
-WiFiMan::WiFiMan(bool authentication,bool serialControl)
+WiFiMan::WiFiMan(bool authentication)
 {
     AUTHENTICATION=authentication;
-    SERIALCONTROL=serialControl;
     WiFi.disconnect();
 }
-
 
 void WiFiMan::setAuthentication(bool enable)
 {
@@ -71,19 +64,10 @@ bool WiFiMan::deleteConfig()
     }
 }
 
-
 void WiFiMan::forceApMode()
 {
     FORCE_AP=true;
 }
-
-
-
-void WiFiMan::setSerialControl(bool enable)
-{
-    SERIALCONTROL = enable;
-}
-
 
 bool WiFiMan::readConfig()
 {
@@ -113,13 +97,6 @@ bool WiFiMan::readConfig()
                     //parse 
                     _wifiSsid = json["wifiSsid"].as<String>();
                     _wifiPasswd = json["wifiPasswd"].as<String>();
-                    _mqttAddr = json["mqttAddr"].as<String>();
-                    _mqttPort = json["mqttPort"].as<String>();
-                    _mqttUsername = json["mqttUsername"].as<String>();
-                    _mqttPasswd = json["mqttPasswd"].as<String>();
-                    _mqttSub = json["mqttSub"].as<String>();
-                    _mqttPub = json["mqttPub"].as<String>();
-                    _mqttId = json["mqttId"].as<String>();
                     _masterPasswd = json["masterPasswd"].as<String>();
 
                     configFile.close();
@@ -138,7 +115,7 @@ bool WiFiMan::readConfig()
                     DEBUG_MSG("#__ Trying to delete config.js\n");
                     deleteConfig();
                     DEBUG_MSG("#__ write template for config.js\n");
-                    writeConfig("","","","","","","","","","");
+                    writeConfig("","","");
                     DEBUG_MSG("#<< readConfig-end\n");
                     return false;
                 }
@@ -158,7 +135,7 @@ bool WiFiMan::readConfig()
             DEBUG_MSG("#__ Unmount FS\n");
             SPIFFS.end();
             DEBUG_MSG("#__ write template for config.js\n");
-            writeConfig("","","","","","","","","","");
+            writeConfig("","","");
             DEBUG_MSG("#<< readConfig-end\n");
             return false;
         }
@@ -171,19 +148,12 @@ bool WiFiMan::readConfig()
     }
 }
 
-bool WiFiMan::writeConfig(String wifiSsid,String wifiPasswd,String mqttAddr,String mqttPort,String mqttUsername,String mqttPasswd,String mqttSub,String mqttPub,String mqttId,String masterPasswd)
+bool WiFiMan::writeConfig(String wifiSsid,String wifiPasswd,String masterPasswd)
 {
     DEBUG_MSG("#>> writeConfig\n");
     DEBUG_MSG("#__ Updating config data\n");
     _wifiSsid = wifiSsid;
     _wifiPasswd = wifiPasswd;
-    _mqttAddr = mqttAddr;
-    _mqttPort = mqttPort;
-    _mqttUsername = mqttUsername;
-    _mqttPasswd = mqttPasswd;
-    _mqttSub = mqttSub;
-    _mqttPub = mqttPub;
-    _mqttId = mqttId;
     _masterPasswd = masterPasswd;
 
     DEBUG_MSG("#__ Writing config.json\n");
@@ -191,13 +161,6 @@ bool WiFiMan::writeConfig(String wifiSsid,String wifiPasswd,String mqttAddr,Stri
     JsonObject& json = jsonBuffer.createObject();
     json["wifiSsid"] = _wifiSsid;
     json["wifiPasswd"] = _wifiPasswd;
-    json["mqttAddr"] = _mqttAddr;
-    json["mqttPort"] = _mqttPort;
-    json["mqttUsername"] = _mqttUsername;
-    json["mqttPasswd"] = _mqttPasswd;
-    json["mqttSub"] = _mqttSub;
-    json["mqttPub"] = _mqttPub;
-    json["mqttId"] = _mqttId;
     json["masterPasswd"] = _masterPasswd;
     
     
@@ -236,7 +199,6 @@ void WiFiMan::start()
         DEBUG_ESP_PORT.setDebugOutput(false);
     #endif
     DEBUG_MSG("#>> start\n");
-    serialController.reset(new SerialController(SERIALCONTROL));
     //get boot mode
     if(!FORCE_AP)
         FORCE_AP = getBootMode();
@@ -266,8 +228,13 @@ void WiFiMan::start()
     else
     {
         //failed to read config file or force AP mode is enabled then fire up softAP
-        DEBUG_MSG("#__ Cannot read config.json or FORCE_AP is enabled\n");
-        FORCE_AP = false;
+        if(FORCE_AP)
+        {
+            DEBUG_MSG("#__ FORCE_AP is enabled.\n");
+            FORCE_AP = false;
+        }
+        else
+            DEBUG_MSG("#__ Cannot read config.json.\n");
         apMode();
         DEBUG_MSG("#<< start-end\n");
         return;
@@ -282,17 +249,18 @@ bool WiFiMan::clientMode()
     _mode=MODE::CLIENT;
 
     //auto connect
-    if(!validConfig())
+    if(_wifiSsid == "")
     {
-        DEBUG_MSG("#__ Invalid config. Exit client mode.\n");
+        DEBUG_MSG("#__ Invalid SSID. Exit client mode.\n");
         DEBUG_MSG("#<< clientMode-end\n");
         return false;
     }
+    else
     {
         DEBUG_MSG("#__ Connectiong to AP using saved config...\n");
         if(connect(_wifiSsid,_wifiPasswd))
         {
-            DEBUG_MSG("#__ Connected to A\nP");
+            DEBUG_MSG("#__ Connected to AP\n");
             DEBUG_MSG("#<< clientMode-end\n");
             return true;
         }
@@ -303,7 +271,6 @@ bool WiFiMan::clientMode()
             return false;
         }
     }
-
 }
 
 bool WiFiMan::apMode()
@@ -321,7 +288,7 @@ bool WiFiMan::apMode()
 
     //setup soft ap
     WiFi.softAPConfig(_apIp, _apGateway, _apSubnet);
-    String apSSID = _apName + String( ESP.getChipId());
+    String apSSID = _apName + "-" + String( ESP.getChipId());
 
     DEBUG_MSG("#__ SoftAP SIID : %s\n",apSSID.c_str());
     if(_apPasswd == "")
@@ -382,7 +349,7 @@ bool WiFiMan::apMode()
         // if connected , break portal loop
         if(WiFi.status() == WL_CONNECTED)
         {
-            DEBUG_MSG("#__ Connected. Break the loop\n");
+            DEBUG_MSG("#__ Connected.\n");
             break;
         }
         else
@@ -397,7 +364,6 @@ bool WiFiMan::apMode()
         //handle web request
         dnsServer->processNextRequest();
         webServer->handleClient();
-        serialController->handleSerial();
     }
 
     WiFi.softAPdisconnect(true);
@@ -478,9 +444,6 @@ void WiFiMan::handleConfig()
 
     String page = FPSTR(HTTP_HEADER);
     page += FPSTR(HTTP_CONFIG_WIFI_DEVICE);
-
-    if(MQTT)
-        page += FPSTR(HTTP_CONFIG_MQTT);
 
     if(AUTHENTICATION)
         page += FPSTR(HTTP_CONFIG_AUTH);
@@ -572,41 +535,7 @@ void WiFiMan::handleSave()
     String wifiSsid = webServer->arg("wifiSsid").c_str();
     String wifiPasswd = webServer->arg("wifiPasswd").c_str();
 
-    //mqttid or deviceId
-    String mqttId =  webServer->arg("mqttId").c_str();
-    if(mqttId == "")
-    {
-        mqttId = _defaultMqttId + "-" + String(ESP.getChipId());
-        DEBUG_MSG("#__ Use default MQTT id : %s\n" , mqttId.c_str());
-    }
-
-    //get mqtt config
-    String mqttAddr;
-    String mqttPort;
-    String mqttUsername;
-    String mqttPasswd;
-    String mqttSub;
-    String mqttPub;
-    if(MQTT)
-    {
-        mqttAddr = webServer->arg("mqttAddr").c_str();
-        mqttPort = webServer->arg("mqttPort").c_str();
-        mqttUsername = webServer->arg("mqttUsername").c_str();
-        mqttPasswd = webServer->arg("mqttPasswd").c_str();
-        mqttSub = webServer->arg("mqttSub").c_str();
-        mqttPub = webServer->arg("mqttPub").c_str();
-    }
-    else
-    {
-        mqttAddr = "";
-        mqttPort = "";
-        mqttUsername = "";
-        mqttPasswd = "";
-        mqttSub = "";
-        mqttPub = "";
-    }
-
-    //Grt Authentication config
+    //Get Authentication config
     String masterPasswd;
     String confirmPasswd;
     if(AUTHENTICATION)
@@ -629,39 +558,23 @@ void WiFiMan::handleSave()
         }
     }
 
-    
-
     DEBUG_MSG("#__ wifiSsid : %s\n" , wifiSsid.c_str());
     DEBUG_MSG("#__ wifiPasswd : %s\n" , wifiPasswd.c_str());
-    DEBUG_MSG("#__ mqttAddr : %s\n" , mqttAddr.c_str());
-    DEBUG_MSG("#__ mqttPort : %s\n" , mqttPort.c_str());
-    DEBUG_MSG("#__ mqttUsername : %s\n" , mqttUsername.c_str());
-    DEBUG_MSG("#__ mqttPasswd : %s\n" , mqttPasswd.c_str());
-    DEBUG_MSG("#__ mqttSub : %s\n" , mqttSub.c_str());
-    DEBUG_MSG("#__ mqttPub : %s\n" , mqttPub.c_str());
-    DEBUG_MSG("#__ mqttId : %s\n" , mqttId.c_str());
     DEBUG_MSG("#__ masterPasswd : %s\n" , masterPasswd.c_str());
     DEBUG_MSG("#__ confirmPasswd : %s\n" , confirmPasswd.c_str());
 
-    if(mqttId == "")
-    {
-        mqttId = _defaultMqttId + "-" + String(ESP.getChipId());
-        DEBUG_MSG("#__ Use default MQTT id : %s\n" , mqttId.c_str());
-    }
-
-
-    String errorMsg = checkInput(wifiSsid,wifiPasswd,mqttAddr,mqttPort,mqttUsername,mqttPasswd,mqttSub,mqttPub,mqttId,masterPasswd,confirmPasswd);
+    String errorMsg = checkInput(wifiSsid,wifiPasswd,masterPasswd,confirmPasswd);
 
     if( errorMsg == "")
     {
         //input seem good, save setting
         if(masterPasswd != "")
         {
-            writeConfig(wifiSsid,wifiPasswd,mqttAddr,mqttPort,mqttUsername,mqttPasswd,mqttSub,mqttPub,mqttId,masterPasswd);//change master password
+            writeConfig(wifiSsid,wifiPasswd,masterPasswd);//change master password
             passwdChanged = true;
         }
         else
-            writeConfig(wifiSsid,wifiPasswd,mqttAddr,mqttPort,mqttUsername,mqttPasswd,mqttSub,mqttPub,mqttId,_masterPasswd);//keep old master password
+            writeConfig(wifiSsid,wifiPasswd,_masterPasswd);//keep old master password
 
         //save custom config
         saveCustomConfig();
@@ -860,24 +773,13 @@ String WiFiMan::getApPassword()
     return _defaultMasterPasswd;
 }
 
-String WiFiMan::checkInput(String wifiSsid,String wifiPasswd,String mqttAddr,String mqttPort,String mqttUsername,String mqttPasswd,String mqttSub,String mqttPub,String mqttId,String masterPasswd,String confirmPasswd)
+String WiFiMan::checkInput(String wifiSsid,String wifiPasswd,String masterPasswd,String confirmPasswd)
 {
     DEBUG_MSG("#>> checkInput\n");
     String errorMsg = "";
     if(wifiSsid == "")
         errorMsg += "Invalid SSID<br/>"; 
     //skip check for wifiPasswd (unsecure ap)
-
-    if(MQTT)
-    {
-        if(mqttAddr == "")
-            errorMsg += "Invalid MQTT address<br/>"; 
-        if(mqttPort == "")
-            errorMsg += "Invalid MQTT port<br/>"; 
-        if((mqttUsername != "" && mqttPasswd == "") || (mqttUsername == "" && mqttPasswd != ""))
-            errorMsg += "Invalid MQTT username or password<br/>"; 
-    }
-    //skip check for mqtt id , id not set , use esp8266 chipID instead
 
 
     if(AUTHENTICATION)
@@ -933,36 +835,6 @@ bool WiFiMan::connect(String wifiSsid,String wifiPasswd)
     }
 }
 
-bool WiFiMan::validConfig()
-{
-    DEBUG_MSG("#>> validConfig\n");
-    bool returnCode = true;
-
-    if(_wifiSsid == "")
-        returnCode = false;
-    if(MQTT)
-    {
-        if(_mqttAddr == "")
-            returnCode = false;
-        if(_mqttPort == "")
-            returnCode = false;
-    }
-
-    if(returnCode)
-    {
-        DEBUG_MSG("#__ Config OK\n");
-        DEBUG_MSG("#<< validConfig-end\n");
-        return returnCode;
-    }
-    else
-    {   
-        DEBUG_MSG("#__ Invalid config\n");
-        DEBUG_MSG("#<< validConfig-end\n");
-        return returnCode;
-    }
-}
-
-
 String WiFiMan::getWifiSsid()
 {
     return _wifiSsid;
@@ -971,45 +843,6 @@ String WiFiMan::getWifiSsid()
 String WiFiMan::getWifiPasswd()
 {
     return _wifiPasswd;
-}
-//get mqtt server address
-String WiFiMan::getMqttServerAddr() 
-{ 
-    return _mqttAddr; 
-}
-//get mqtt server password
-String WiFiMan::getMqttServerPasswd() 
-{ 
-    return _mqttPasswd; 
-}
-//get mqtt server username
-String WiFiMan::getMqttUsername() 
-{ 
-    return _mqttUsername; 
-}
-//get mqtt id / device id
-String WiFiMan::getMqttId() 
-{ 
-    return _mqttId;
-}
-String WiFiMan::getDeviceId()
-{
-    return _mqttId;
-}
-//get mqtt sub topic
-String WiFiMan::getMqttSub() 
-{ 
-    return _mqttSub; 
-}
-//get mqtt pub  topic
-String WiFiMan::getMqttPub() 
-{ 
-    return _mqttPub; 
-}
-//get mqtt port
-int WiFiMan::getMqttPort() 
-{ 
-    return atoi(_mqttPort.c_str()); 
 }
 //get soft AP ip
 IPAddress WiFiMan::getSoftApIp() 
@@ -1020,11 +853,6 @@ IPAddress WiFiMan::getSoftApIp()
 IPAddress WiFiMan::getIp() 
 { 
     return WiFi.localIP(); 
-}
-//get dns name
-String WiFiMan::getDnsName() 
-{ 
-    return (_mqttId + ".local"); 
 }
 //get device mac address
 String WiFiMan::getMacAddr() 
@@ -1104,34 +932,8 @@ bool WiFiMan::getConfig(Config *conf)
     //conf->wifiPasswd = (char*)malloc((_wifiPasswd.length()+1) * sizeof(char));
     strcpy(conf->wifiPasswd,_wifiPasswd.c_str());
     
-    //conf->mqttAddr = (char*)malloc((_mqttAddr.length()+1) * sizeof(char));
-    strcpy(conf->mqttAddr,_mqttAddr.c_str());
-    
-    conf->mqttPort = _mqttPort.toInt();
-    
-    //conf->mqttUsername = (char*)malloc((_mqttUsername.length()+1) * sizeof(char));
-    strcpy(conf->mqttUsername,_mqttUsername.c_str());
-    
-    //conf->mqttPasswd = (char*)malloc((_mqttPasswd.length()+1) * sizeof(char));
-    strcpy(conf->mqttPasswd,_mqttPasswd.c_str());
-    
-    //conf->mqttSub = (char*)malloc((_mqttSub.length()+1) * sizeof(char));
-    strcpy(conf->mqttSub,_mqttSub.c_str());
-    
-    //conf->mqttPub = (char*)malloc((_mqttPub.length()+1) * sizeof(char));
-    strcpy(conf->mqttPub,_mqttPub.c_str());
-    
-    //conf->mqttId = (char*)malloc((_mqttId.length()+1) * sizeof(char));
-    strcpy(conf->mqttId,_mqttId.c_str());
-    
     //conf->masterPasswd = (char*)malloc((_masterPasswd.length()+1) * sizeof(char));
     strcpy(conf->masterPasswd,_masterPasswd.c_str());
-
-    String mdnsName = _mqttId + ".local";
-    //conf->mdnsName = (char*)malloc((mdnsName.length()+1) * sizeof(char));
-    strcpy(conf->mdnsName,mdnsName.c_str());
-
-    conf->localIP = getIp();
 
     if(WiFi.status() == WL_CONNECTED)
         return true;
@@ -1317,10 +1119,4 @@ bool WiFiMan::getCustomConfig(CustomConfig *customConf)
         DEBUG_MSG("#<< readCustomConfigJson-end\n");
         return false;
     }
-}
-
-
-void WiFiMan::disableMqttConfig()
-{
-    MQTT = false;
 }

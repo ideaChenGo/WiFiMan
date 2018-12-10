@@ -5,24 +5,14 @@
 #include <ESP8266WebServer.h>
 #include <ArduinoJson.h>
 #include <FS.h>
-#include <ESP8266mDNS.h>
 #include <DNSServer.h>
 #include "ESP8266OTA.h"
 #include "WebUI.h"
 #include "Config.h"
-#include "SerialController.h"
 #include "Boot.h"
 #include "Theme.h"
 #include "DebugHelper.h"
 #include "CusomConfig.h"
-
-/*
-#ifdef DEBUG_ESP_PORT
-#define DEBUG_MSG(...) DEBUG_ESP_PORT.printf( __VA_ARGS__ )
-#else
-#define DEBUG_MSG(...)
-#endif
-*/
 
 enum ACTION_TYPE {NONE,CONFIG_SAVED,CLEAR_CONFIG,SYS_RESET};
 enum MODE {INIT,CONNECTING,CLIENT,AP,TIMEOUT};
@@ -30,10 +20,8 @@ enum MODE {INIT,CONNECTING,CLIENT,AP,TIMEOUT};
 class WiFiMan
 {
   private:
-    bool AUTHENTICATION = false;;
-    bool SERIALCONTROL = false;;
+    bool AUTHENTICATION = false;
     bool FORCE_AP = false;
-    bool MQTT = true;
 
     //mode
     int _mode = MODE::INIT;
@@ -54,9 +42,6 @@ class WiFiMan
     //in ap mode, SSID will be <defaultAPName>+<chipID>
     String _apName = "esp8266-id";
     String _apPasswd = "";
-    
-    //serial buffer
-    String serialBuffer = "";
 
     //password use in the first time login to config portal.This can be changed in config menu
     String _defaultMasterPasswd = "password";
@@ -67,18 +52,11 @@ class WiFiMan
     IPAddress _apIp = IPAddress(192, 168, 1, 1);;
     IPAddress _apGateway = IPAddress(192, 168, 1, 1);
     IPAddress _apSubnet = IPAddress(255, 255, 255, 0);
-    String _defaultMqttId = "esp8266";
+
 
     /* config , this data will be stored in config.json */
     String _wifiSsid = "";
     String _wifiPasswd = "";
-    String _mqttAddr = "";
-    String _mqttPort = "";
-    String _mqttUsername = "";
-    String _mqttPasswd = "";
-    String _mqttSub = "";
-    String _mqttPub = "";
-    String _mqttId = "";
     String _masterPasswd = "";
 
     //web ui 
@@ -96,7 +74,6 @@ class WiFiMan
     std::unique_ptr<DNSServer> dnsServer;
     std::unique_ptr<ESP8266WebServer> webServer;
     std::unique_ptr<ESP8266OTA> otaUpdater;
-    std::unique_ptr<SerialController> serialController;
 
     //web handles
     void handleRoot();
@@ -121,15 +98,13 @@ class WiFiMan
     //read config.json
     bool readConfig();
     //write new setting to config.json, new config also be reload
-    bool writeConfig(String wifiSsid,String wifiPasswd,String mqttAddr,String mqttPort,String mqttUsername,String mqttPasswd,String mqttSub,String mqttPub,String mqttId,String masterPasswd);
-    //check if user input are valid
-    bool validConfig();
+    bool writeConfig(String wifiSsid,String wifiPasswd,String masterPasswd);
     //client-mode connect to AP
     bool clientMode();
     //ap-mode , if client-mode failed to connect to AP , softAP will start
     bool apMode();
     //check user input and return error msg if nedded
-    String checkInput(String wifiSsid,String wifiPasswd,String mqttAddr,String mqttPort,String mqttUsername,String mqttPasswd,String mqttSub,String mqttPub,String mqttId,String masterPasswd,String confirmPasswd); 
+    String checkInput(String wifiSsid,String wifiPasswd,String masterPasswd,String confirmPasswd); 
     //connect to ap 
     bool connect(String wifiSsid,String wifiPasswd);
 
@@ -140,7 +115,6 @@ class WiFiMan
     bool saveCustomConfig();
     
   public:
-    WiFiMan(bool authentication,bool serialControl);
     WiFiMan(bool authentication);
     WiFiMan();
     //~WiFiMan();
@@ -158,8 +132,6 @@ class WiFiMan
     
     //enable/disable webserver authentication
     void setAuthentication(bool enable);
-    //set serial control
-    void setSerialControl(bool enable);
     //force config mode 
     void forceApMode();
     //Change WebUI of config portal
@@ -188,28 +160,11 @@ class WiFiMan
     String getWifiSsid();
     //get wifi password
     String getWifiPasswd();
-    //get mqtt server address
-    String getMqttServerAddr();
-    //get mqtt server password
-    String getMqttServerPasswd();
-    //get mqtt server username
-    String getMqttUsername();
-    //get mqtt id
-    String getMqttId();
-    String getDeviceId();
-    //get mqtt sub topic
-    String getMqttSub();
-    //get mqtt pub  topic 
-    String getMqttPub();
-    //get mqtt port
-    int getMqttPort();
     //get soft AP ip 
     IPAddress getSoftApIp();
     //get ip in client mode
     IPAddress getIp();
-    //get dns name 
-    String getDnsName();
-    //get device mac address
+    //mac
     String getMacAddr();
     //get all the config . return true if the config is valid(success connected to ap) #testing
     bool getConfig(Config *conf);
@@ -217,7 +172,6 @@ class WiFiMan
     void addCustomArg(String label,String name,String length,String type,String placeholder,String addition);
     //get custom config object
     bool getCustomConfig(CustomConfig *customConf);
-    //disable MQTT config in UI
-    void disableMqttConfig();
+
 };
 #endif

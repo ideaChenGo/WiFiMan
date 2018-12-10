@@ -5,10 +5,15 @@
 - Easier to use api.
 
 # WiFiMan + ESP8266OTA
-Wifiman is Wifi manager for ESP8266 with customizable web UI and ability to config mqtt and control via serial.   
+Wifiman is Wifi manager for ESP8266 with customizable web UI.   
 ESP8266 is a modified version of ESP8266HTTPUpdateServer customizable web UI.   
 
 ## Change logs
+### v1.3.0
+- Removed mqtt from default config page.
+- Rework on flash memory consumption.
+- Removed unused API.
+
 ### v1.2.0
 - Added "Custom config" function.
 ### v1.1.0
@@ -33,17 +38,12 @@ Some sample of Theme.h are available in themes folder.
 ## API
 ### Constructor 
 - WiFiMan();   
-    Create default WiFiMan object without authentication,serial control and debug.
-    Authentication and serial control can be set with WiFiMan(bool authentication,bool serialControl); or enable using config portal APIs.   
+    Create default WiFiMan object without authentication mode.Authentication can be set with WiFiMan(bool authentication); or enable later using config portal APIs.   
 - WiFiMan(bool authentication);   
-- WiFiMan(bool authentication,bool serialControl);   
-
 
 ### Config portal
 - void setAuthentication(bool enable);   
     Enable authentication for http access.
-- void setSerialControl(bool enable);   
-    Enable control via serial.
 - void setWebUi(String title,String banner,String build,String branch,String deviceInfo,String footer);   
     Set web UI of config portal.
 - void setWebUi(String title,String banner,String build,String branch,String footer);   
@@ -76,24 +76,8 @@ Some sample of Theme.h are available in themes folder.
     Get AP password
 - IPAddress getSoftApIp();   
     Get soft AP ip 
-- String getMqttServerAddr();   
-    Get mqtt server address
-- String getMqttServerPasswd();   
-    Get mqtt server password
-- String getMqttUsername();   
-    Get mqtt server username
-- String getMqttId(); and String getDeviceId();   
-    Get mqtt id or device id.Lis library use device id as mqtt id.
-- String getMqttSub();   
-    Get mqtt sub topic
-- String getMqttPub();   
-    Get mqtt pub  topic 
-- int getMqttPort();   
-    Get mqtt port
 - IPAddress getIp();   
     Get ip in client mode
-- String getDnsName();   
-    Get mDNS name 
 - String getMacAddr();   
     Get device mac address
 - bool getConfig(Config *conf);   
@@ -133,21 +117,6 @@ Global control functions are not member of WiFiMan class, and can be called anyw
 - UI texts can be set with setWebUi(...).
 - UI color and backdround can be edit in Theme.h file.
 
-## Serial control
-ESP8266 can be controlled by Serial command when in Config mode or/and in Client mode(need declare SerialController object ).   
-*Serial baud rates : 115200
-### Available commands
-- #$> reboot   
-    Reboot ESP8266.
-- #$> config   
-    Reboot ESP8266 and go straight to Config mode without trying to auto-connect using saved setting.
-- #$> clear   
-    Clear all saved setting and reboot ESP8266.
-### Serial control in config mode
-Serial must be enabled by called WiFiManObjectName.setSerialControl(true);.
-### Serial control in client mode
-ESP8266 can be controlled by Serial command when in Client mode(connect to AP) by define SerialControl object and call SerialControlObjectName.handleSerial(); in loop function.
-
 ## Q/A
 ### How to enable debug
 Enable Debug port in Arduino IDE (Tools > Debug port)
@@ -160,10 +129,8 @@ This method force WiFiMan to skip auto-connect and go straight to Config mode.fo
 Reboot esp8266 and go to config mode.This method is not a member of WiFiMan class and can be called anywhere even when WiFiMan is out of scoop.
 Caution : rebootToApMode use ESP.restart() to reboot the device . ESP.restart() may cause ESP8266 to crash at the first restart after serial flashing.For more information , please check [ESP8266 Issues](https://github.com/esp8266/Arduino/issues/1722)   
     
-### What are #$<>_ characters in Serial output messenger mean?
+### What are #$<>_ characters in Serial debug output messenger mean?
 - #>> (debug) Function has been called.   
 - #<< (debug) End of function.   
 - #__ (debug) Debug output.   
 - #>< (debug) Function without debug output has been called.   
-- #$> (serial-control) Execute serial command. Ex "#$> reboot".   
-- #$< (serial-control) Result when execute serial command.   
