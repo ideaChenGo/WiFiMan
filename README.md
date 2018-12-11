@@ -52,7 +52,7 @@ Some sample of Theme.h are available in themes folder.
 - void setApConfig(IPAddress ip,IPAddress gateway,IPAddress subnet);   
     Set Soft AP IP,Gateway,Subnet.If not configured , the default value is 192.168.1.1 192.168.1.1 255.255.255.0 .
 - void setMaxConnectAttempt(int connectAttempt);   
-    Limit the max connect attemp to other AP in client mode.Default is 36.
+    Limit the max connect attemp to other AP in client mode.Default is 24.
 - void setConfigTimeout(int timeout);   
     Set timeout limit of config portal in minute.Default is 15 minutes.
 - void setApName(String apName);  
@@ -87,7 +87,7 @@ Some sample of Theme.h are available in themes folder.
 - String getMacAddr();   
     Get device mac address
 - bool getConfig(Config *conf);   
-    Get all config parameters. Return true if the config is valid(success connected to ap)
+    Get all config parameters. Return true if the config is valid(success connected to ap).
 - bool getCustomConfig(CustomConfig *customConf);   
     Get custom config parameters. Return true if success, false if there is no custom config or cannot read customConfig file.
 

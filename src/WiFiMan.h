@@ -34,7 +34,7 @@ class WiFiMan
     
     /* server config */
     //number of connect attempt to AP
-    int _maxConnectAttempt = 36;
+    int _maxConnectAttempt = 24;
     //timeout in AP mode (min), server will turnoff after timeout
     int _configTimeout = 15;
     //DNS server port in ap mode

@@ -403,6 +403,8 @@ void WiFiMan::handleNotFound()
     page.replace("{branch}",_branch);
     page.replace("{deviceInfo}",_deviceInfo);
     page.replace("{footer}",_footer);
+    page.replace("{url}","/");
+    page.replace("{delay}","15");
 
     webServer->send ( 404, "text/html", page );
 }
@@ -599,7 +601,7 @@ void WiFiMan::handleSave()
         page.replace("{deviceInfo}",_deviceInfo);
         page.replace("{footer}",_footer);
         page.replace("{url}","/");
-        page.replace("{delay}","30");
+        page.replace("{delay}","24");
 
         applyTheme(page);
 
@@ -952,28 +954,6 @@ void WiFiMan::applyTheme(String &page)
         page.replace("{custom-arg}",httpCustomArg);
     else
         page.replace("{custom-arg}","");
-}
-
-
-void WiFiMan::addTextBox(String name,String length,String type,String placeholder,String addition)
-{
-    DEBUG_MSG("#>< addCustomArg\n");
-    String arg = FPSTR(HTTP_CUSTOM_TEXTBOX);
-
-    //add to arg pool
-    arg.replace("{arg-name}",name);
-    arg.replace("{arg-length}",length);
-    arg.replace("{arg-type}",type);
-    arg.replace("{arg-place-holder}",placeholder);
-    arg.replace("{arg-addition}",addition);
-    //add newline
-    if(newline)
-        arg += "<br/>";
-    httpCustomArg += arg;
-
-    //add to custom arg struct
-    customConfig.args[customConfig.count].key = name;
-    customConfig.count++;
 }
 
 bool WiFiMan::saveCustomConfig()

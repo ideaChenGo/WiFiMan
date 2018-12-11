@@ -11,7 +11,7 @@ void setup()
 
   //custom config
   wman.addLabel("Custom configuration",true);
-  wman.addTextBox("customText","12","text","place holder","required",true);
+  wman.addTextBox("customText","12","text","place holder","required");
   wman.addCheckBox("customCheckBox","checked","Check box example",true);
   wman.addLabel("Radio button",true);
   wman.addRadioButton("customRadioButton","1","choice 1",false);

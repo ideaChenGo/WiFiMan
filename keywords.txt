@@ -40,4 +40,7 @@ clear	KEYWORD2
 reboot	KEYWORD2
 setUpdaterUi	KEYWORD2
 getCustomConfig	KEYWORD2
-getDeviceId	KEYWORD2
+addTextBox	KEYWORD2
+addCheckBox	KEYWORD2
+addRadioButton	KEYWORD2
+addLabel	KEYWORD2
