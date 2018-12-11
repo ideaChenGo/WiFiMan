@@ -1,4 +1,5 @@
 #include <WiFiMan.h>
+
 Config conf;
 CustomConfig customConf;
 void setup() 
@@ -8,14 +9,16 @@ void setup()
   //create default object
   WiFiMan wman = WiFiMan();
 
-  //add custom config, this must be called before wman.start()
-  //with laber and addition required filed
-  wman.addCustomArg("number","test-number","6","number","test number","required");
-  //with label
-  wman.addCustomArg("password","test-password","6","password","test password","");
-  //or just the input text field
-  wman.addCustomArg("","test-txt","6","text","test txt","");
+  //custom config
+  wman.addLabel("Custom configuration",true);
+  wman.addTextBox("customText","12","text","place holder","required",true);
+  wman.addCheckBox("customCheckBox","checked","Check box example",true);
+  wman.addLabel("Radio button",true);
+  wman.addRadioButton("customRadioButton","1","choice 1",false);
+  wman.addRadioButton("customRadioButton","2","choice 2",false);
+  wman.addRadioButton("customRadioButton","3","choice 3",true);
 
+  
   wman.start();
 
   if(wman.getConfig(&conf))
@@ -29,9 +32,7 @@ void setup()
     Serial.print("Master password : ");
     Serial.println(conf.masterPasswd);
   }
-
-  //get custom config parameters
-  if(wman.getCustomConfig(&customConf))
+    if(wman.getCustomConfig(&customConf))
   {
     for(int i=0;i<customConf.count;i++)
     {

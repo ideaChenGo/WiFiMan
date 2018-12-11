@@ -11,12 +11,13 @@ div{
     padding: 5px;
     font-size: 1em;
 }
-input{
+.textBox
+{
     width: 95%;
     margin-bottom: 5px;
     border-radius: 4px;
     padding: 5px;
-    font-size: 1em;
+    font-size: 1em;            
 }
 body {
     height: 100%;

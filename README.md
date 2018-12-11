@@ -1,6 +1,5 @@
 # Testing branch for v1.3
 - Rework on flash and memory consumption.
-- Ability to add other form input (radio butoon,select,check box..)
 - Disable mqtt config by default
 - Easier to use api.
 
@@ -57,18 +56,25 @@ Some sample of Theme.h are available in themes folder.
 - void setConfigTimeout(int timeout);   
     Set timeout limit of config portal in minute.Default is 15 minutes.
 - void setApName(String apName);  
-    Set soft AP SSID.Default is "esp8266-id[ChipID]".
+    Set soft AP SSID.Default is "esp8266-id-[ChipID]".
 - void setApPasswd(String passwd);   
     Set soft AP password.
 - void setMasterUsername(String username);   
     Set config portal username.
 - void setDefaultMasterPasswd(String passwd);   
     Set config portal default password.
-- void addCustomArg(String label,String name,String length,String type,String placeholder,String addition);   
-    Add custom config parameter to config page.
-- void disableMqttConfig()   
-    Disable MQTT configuration in web UI.
-  
+
+### Custom config argument
+- void addLabel(String label,bool newline);   
+    Add text label to web UI
+- void addTextBox(String name,String length,String type,String placeholder,String addition);   
+    Add text input to web UI
+- void addCheckBox(String name,String value,String text,bool newline);   
+    Add checkbox to web UI, checkboxes name must be unique.
+- void addRadioButton(String name,String value,String text,bool newline);   
+    Add radio button to web UI.   
+
+
 ### Get config parameters
 - String getWifiSsid();   
     Get AP SSID

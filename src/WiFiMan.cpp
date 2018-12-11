@@ -443,7 +443,7 @@ void WiFiMan::handleConfig()
     DEBUG_MSG("#><  handleConfig\n");
 
     String page = FPSTR(HTTP_HEADER);
-    page += FPSTR(HTTP_CONFIG_WIFI_DEVICE);
+    page += FPSTR(HTTP_CONFIG_WIFI);
 
     if(AUTHENTICATION)
         page += FPSTR(HTTP_CONFIG_AUTH);
@@ -955,18 +955,20 @@ void WiFiMan::applyTheme(String &page)
 }
 
 
-void WiFiMan::addCustomArg(String label,String name,String length,String type,String placeholder,String addition)
+void WiFiMan::addTextBox(String name,String length,String type,String placeholder,String addition)
 {
     DEBUG_MSG("#>< addCustomArg\n");
-    String arg = FPSTR(HTTP_CUSTOM_ARG);
+    String arg = FPSTR(HTTP_CUSTOM_TEXTBOX);
 
     //add to arg pool
-    arg.replace("{arg-label}",label);
     arg.replace("{arg-name}",name);
     arg.replace("{arg-length}",length);
     arg.replace("{arg-type}",type);
     arg.replace("{arg-place-holder}",placeholder);
     arg.replace("{arg-addition}",addition);
+    //add newline
+    if(newline)
+        arg += "<br/>";
     httpCustomArg += arg;
 
     //add to custom arg struct
@@ -1119,4 +1121,96 @@ bool WiFiMan::getCustomConfig(CustomConfig *customConf)
         DEBUG_MSG("#<< readCustomConfigJson-end\n");
         return false;
     }
+}
+
+void WiFiMan::addTextBox(String name,String length,String type,String placeholder,String addition)
+{
+    DEBUG_MSG("#>< addCustomArg\n");
+    String arg = FPSTR(HTTP_CUSTOM_TEXTBOX);
+
+    //add to arg pool
+    arg.replace("{arg-name}",name);
+    arg.replace("{arg-length}",length);
+    arg.replace("{arg-type}",type);
+    arg.replace("{arg-place-holder}",placeholder);
+    arg.replace("{arg-addition}",addition);
+    //add newline
+    httpCustomArg += arg;
+
+    //add to custom arg struct
+    customConfig.args[customConfig.count].key = name;
+    customConfig.count++;
+}
+
+
+void WiFiMan::addCheckBox(String name,String value,String text,bool newline)
+{
+    DEBUG_MSG("#>< addCheckBox\n");
+    String arg = FPSTR(HTTP_CUSTOM_CHECKBOX);
+
+    //add to arg pool
+    arg.replace("{arg-name}",name);
+    arg.replace("{arg-value}",value);
+    arg.replace("{arg-text}",text);
+    //add newline
+    if(newline)
+        arg += "<br/>";
+    httpCustomArg += arg;
+    
+    //check for duplicate 
+    bool duplicate = false;
+    for(int i=0;i<customConfig.count;i++)
+    {
+        if(name==customConfig.args[i].key)
+        {
+            duplicate = true;
+            break;
+        }
+    }
+    if(!duplicate)
+    {
+        //add to custom arg struct
+        customConfig.args[customConfig.count].key = name;
+        customConfig.count++;
+    }
+}
+
+
+void WiFiMan::addRadioButton(String name,String value,String text,bool newline)
+{
+    DEBUG_MSG("#>< addRadioButton\n");
+    String arg = FPSTR(HTTP_CUSTOM_RADIOBUTTON);
+
+    //add to arg pool
+    arg.replace("{arg-name}",name);
+    arg.replace("{arg-value}",value);
+    arg.replace("{arg-text}",text);
+    //add newline
+    if(newline)
+        arg += "<br/>";
+    httpCustomArg += arg;
+
+    //check for duplicate 
+    bool duplicate = false;
+    for(int i=0;i<customConfig.count;i++)
+    {
+        if(name==customConfig.args[i].key)
+        {
+            duplicate = true;
+            break;
+        }
+    }
+    if(!duplicate)
+    {
+        //add to custom arg struct
+        customConfig.args[customConfig.count].key = name;
+        customConfig.count++;
+    }
+}
+
+void WiFiMan::addLabel(String label,bool newline)
+{
+    httpCustomArg += label;
+    if(newline)
+        httpCustomArg += "<br/>";
 }

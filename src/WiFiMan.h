@@ -168,8 +168,13 @@ class WiFiMan
     String getMacAddr();
     //get all the config . return true if the config is valid(success connected to ap) #testing
     bool getConfig(Config *conf);
+
     ///add cutom config to config UI
-    void addCustomArg(String label,String name,String length,String type,String placeholder,String addition);
+    void addTextBox(String name,String length,String type,String placeholder,String addition);
+    void addCheckBox(String name,String value,String text,bool newline);
+    void addRadioButton(String name,String value,String text,bool newline);
+    void addLabel(String label,bool newline);
+
     //get custom config object
     bool getCustomConfig(CustomConfig *customConf);
 
